@@ -23,40 +23,65 @@ exports.getAddProduct = (req, res, next) => {
 };
 
 exports.postAddProduct = (req, res, next) => {
-  //   console.log(req.body);
   const title = req.body.title;
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-
-  // req.user.createProduct({
-  //   title:title,
-  //   price:price,
-  //   imageUrl: imageUrl,
-  //   description: description,
-  // })
-  const product = new Product(title,price,description,imageUrl)
-  product.save()
-  .then((_) => {
-    console.log("created product")
-    res.redirect('/admin/products')
-  })
-  .catch((err) => console.log(err));
-  // Product.create({
-  //   title: title,
-  //   description: description,
-  //   imageUrl: imageUrl,
-  //   price: price,
-  // })
-
-  // const product = new Product(null, title, imageUrl, description, price);
-  // product
-  //   .save()
-  //   .then(() => {
-  //     res.redirect("/");
-  //   })
-  //   .catch((err) => console.log(err));
+  const product = new Product(
+    title,
+    price,
+    description,
+    imageUrl,
+    null,
+    req.user._id
+  );
+  product
+    .save()
+    .then(result => {
+      // console.log(result);
+      console.log('Created Product');
+      res.redirect('/admin/products');
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
+
+// exports.postAddProduct = (req, res, next) => {
+//   //   console.log(req.body);
+//   const title = req.body.title;
+//   const imageUrl = req.body.imageUrl;
+//   const price = req.body.price;
+//   const description = req.body.description;
+
+//   // req.user.createProduct({
+//   //   title:title,
+//   //   price:price,
+//   //   imageUrl: imageUrl,
+//   //   description: description,
+//   // })
+//   const product = new Product(title,price,description,imageUrl, null, req.user._id)
+//   product.save()
+//   .then((_) => {
+//     console.log("created product")
+//     res.redirect('/admin/products')
+//   })
+//   .catch((err) => console.log(err));
+//   // Product.create({
+//   //   title: title,
+//   //   description: description,
+//   //   imageUrl: imageUrl,
+//   //   price: price,
+//   // })
+
+//   // const product = new Product(null, title, imageUrl, description, price);
+//   // product
+//   //   .save()
+//   //   .then(() => {
+//   //     res.redirect("/");
+//   //   })
+//   //   .catch((err) => console.log(err));
+// };
 
 exports.getEditProduct = (req, res, next) => {
   // res.sendFile(path.join(rootDir,'views', 'add-product.html'));
@@ -122,6 +147,17 @@ exports.postEditProduct = (req, res, next) => {
   // updatedProduct.save();
   // res.redirect("/admin/products");
 };
+
+exports.postDeleteProduct=(req,res,next) => {
+  const prodId = req.body.productId;
+  Product.deleteById(prodId)
+    .then(()=>{
+      res.redirect("/admin/products");
+    })
+    .catch(err => {
+      console.log(err);
+    })
+}
 
 // exports.getProducts = (req, res, next) => {
 //   req.user.getProducts()

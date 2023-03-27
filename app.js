@@ -20,6 +20,7 @@ const shopRoutes = require("./routes/shop");
 
 const errorController = require("./controllers/error");
 const mongoConnect = require('./util/database').mongoConnect;
+const User = require('./models/user');
 // const sequelize = require("./util/database");
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -31,6 +32,15 @@ app.use(express.static(path.join(__dirname, "public")));
 //     res.send('<h1>Product Page</h1>');
 //     // next();
 // })
+
+app.use((req, res, next) => {
+  User.findById('642171fbdb71737596a5a70b')
+    .then(user => {
+      req.user = new User(user.name, user.email, user.cart, user._id);
+      next();
+    })
+    .catch(err => console.log(err));
+});
 
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
