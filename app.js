@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
+const csrf = require('csurf');
+const flash = require('connect-flash');
 
 const MONGODB_URI =
   "mongodb+srv://tusharph1:H7MKm7DQxGFinIw3@cluster0.pnz96nc.mongodb.net/shop?retryWrites=true&w=majority";
@@ -14,6 +16,7 @@ const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: "sessions",
 });
+const csrfProtection = csrf();
 
 app.set("view engine", "ejs");
 app.set("views", "views");
@@ -44,6 +47,8 @@ app.use(
     store: store,
   })
 );
+app.use(csrfProtection);
+app.use(flash());
 
 // app.use('/product',(req,res,next)=>{
 //     console.log('product middleware')
@@ -63,6 +68,12 @@ app.use((req, res, next) => {
     .catch((err) => console.log(err));
 });
 
+app.use((req,res,next)=> {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+})
+
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
@@ -72,18 +83,18 @@ app.use(errorController.get404);
 mongoose
   .connect(MONGODB_URI)
   .then((result) => {
-    User.findOne().then((user) => {
-      if (!user) {
-        const user = new User({
-          name: "Tushar",
-          email: "tushar@gmail.com",
-          cart: {
-            items: [],
-          },
-        });
-        user.save();
-      }
-    });
+    // User.findOne().then((user) => {
+    //   if (!user) {
+    //     const user = new User({
+    //       name: "Tushar",
+    //       email: "tushar@gmail.com",
+    //       cart: {
+    //         items: [],
+    //       },
+    //     });
+    //     user.save();
+    //   }
+    // });
     app.listen(3000, () => {
       console.log("Server is running on port 3000");
     });
