@@ -2,16 +2,25 @@ const path = require("path");
 
 const express = require("express");
 const bodyParser = require("body-parser");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
+
+const MONGODB_URI =
+  "mongodb+srv://tusharph1:H7MKm7DQxGFinIw3@cluster0.pnz96nc.mongodb.net/shop?retryWrites=true&w=majority";
 
 const app = express();
+const store = new MongoDBStore({
+  uri: MONGODB_URI,
+  collection: "sessions",
+});
 
 app.set("view engine", "ejs");
 app.set("views", "views");
 
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
-const authRoutes = require('./routes/auth');
+const authRoutes = require("./routes/auth");
 
 // const Product = require("./models/product");
 const User = require("./models/user");
@@ -27,7 +36,14 @@ const errorController = require("./controllers/error");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
-
+app.use(
+  session({
+    secret: "my secret",
+    resave: false,
+    saveUninitialized: false,
+    store: store,
+  })
+);
 
 // app.use('/product',(req,res,next)=>{
 //     console.log('product middleware')
@@ -36,12 +52,15 @@ app.use(express.static(path.join(__dirname, "public")));
 // })
 
 app.use((req, res, next) => {
-  User.findById('64232680e621cd25d56b9293')
-    .then(user => {
+  if(!req.session.user){
+    return next();
+  }
+  User.findById(req.session.user._id)
+    .then((user) => {
       req.user = user;
       next();
     })
-    .catch(err => console.log(err));
+    .catch((err) => console.log(err));
 });
 
 app.use("/admin", adminRoutes);
@@ -50,29 +69,28 @@ app.use(authRoutes);
 
 app.use(errorController.get404);
 
-
-mongoose.connect('mongodb+srv://tusharph1:H7MKm7DQxGFinIw3@cluster0.pnz96nc.mongodb.net/shop?retryWrites=true&w=majority')
-  .then(result => {
-    User.findOne()
-      .then(user => {
-        if(!user){
-          const user = new User({
-            name: "Tushar",
-            email: "tushar@gmail.com",
-            cart: {
-              items: []
-            }
-          })
-          user.save()
-        }
-      })
-    app.listen(3000, ()=>{
-      console.log('Server is running on port 3000');
-    })
+mongoose
+  .connect(MONGODB_URI)
+  .then((result) => {
+    User.findOne().then((user) => {
+      if (!user) {
+        const user = new User({
+          name: "Tushar",
+          email: "tushar@gmail.com",
+          cart: {
+            items: [],
+          },
+        });
+        user.save();
+      }
+    });
+    app.listen(3000, () => {
+      console.log("Server is running on port 3000");
+    });
   })
-  .catch(err => {
+  .catch((err) => {
     console.log(err);
-  })
+  });
 
 // mongoConnect(() => {
 //   app.listen(3000, () => {
